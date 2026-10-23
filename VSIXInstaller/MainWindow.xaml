@@ -1,0 +1,1064 @@
+﻿<Window x:Class="VSIXInstaller.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="User Account Control"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        FocusManager.IsFocusScope="False"
+        Loaded="Window_Loaded"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        KeyDown="Window_KeyDown"
+        Closing="Window_Closing">
+
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="Close"/>
+    </Window.InputBindings>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="Close" Executed="CloseCommand_Executed"/>
+    </Window.CommandBindings>
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="DimOverlayBrush" Color="#CC000000"/>
+        <SolidColorBrush x:Key="HeaderBrush" Color="#FF3A3A3A"/>
+        <SolidColorBrush x:Key="FooterBrush" Color="#FF1C1C1C"/>
+        <SolidColorBrush x:Key="BodyBrush" Color="#FF2B2B2B"/>
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#FF3F3F3F"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#FFB0B0B0"/>
+        <SolidColorBrush x:Key="LinkBrush" Color="#FF4CC2FF"/>
+        <!-- Tab / keyboard focus ring (white in dark, black in light — ApplyTheme retints). -->
+        <SolidColorBrush x:Key="KeyboardFocusBorderBrush" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF1C1C1C"/>
+        <SolidColorBrush x:Key="InputBorderBrush" Color="#FF6E6E6E"/>
+        <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="InputFocusBorderBrush" Color="#FF60CDFF"/>
+        <SolidColorBrush x:Key="InputFocusForegroundBrush" Color="#FF1A1A1A"/>
+        <SolidColorBrush x:Key="InputForegroundBrush" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="PlaceholderBrush" Color="#FF6E6E6E"/>
+        <!-- Focused empty field: placeholder a bit lighter, still visible until text is entered. -->
+        <SolidColorBrush x:Key="PlaceholderFocusBrush" Color="#FFA8A8A8"/>
+        <!-- Dark theme default (yellow); ApplyTheme switches to red in light theme. -->
+        <SolidColorBrush x:Key="CredentialErrorBrush" Color="#FFEFCE0B"/>
+
+        <!-- Filled from Windows accent (Settings → Personalization → Colors). -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF0078D4"/>
+        <SolidColorBrush x:Key="AccentLightBrush" Color="#FF60CDFF"/>
+        <SolidColorBrush x:Key="AccentDarkBrush" Color="#FF005A9E"/>
+        <!-- More choices link hover: lighter than body (dark) / darker than body (light). -->
+        <SolidColorBrush x:Key="MoreChoicesLinkHoverBrush" Color="#FFB8B8B8"/>
+        <!-- Selected = translucent accent; hover darkens via black wash (set in ApplyTheme). -->
+        <SolidColorBrush x:Key="MoreChoicesSelectedBrush" Color="#590078D4"/>
+        <SolidColorBrush x:Key="MoreChoicesSelectedDimBrush" Color="#6E005A9E"/>
+        <SolidColorBrush x:Key="MoreChoicesSelectedHoverBrush" Color="#78004A80"/>
+        <!-- Unselected hover: light black wash only (not accent). -->
+        <SolidColorBrush x:Key="MoreChoicesHoverBrush" Color="#28000000"/>
+        <!-- Win11-like overlay scrollbar thumb (ApplyTheme retints). -->
+        <SolidColorBrush x:Key="OverlayScrollThumbBrush" Color="#66FFFFFF"/>
+        <SolidColorBrush x:Key="OverlayScrollThumbHoverBrush" Color="#FF686868"/>
+        <SolidColorBrush x:Key="OverlayScrollTrackHoverBrush" Color="#FF1E1E1E"/>
+        <SolidColorBrush x:Key="FieldActionGlyphBrush" Color="#FF7A7A7A"/>
+        <SolidColorBrush x:Key="FieldActionGlyphHoverBrush" Color="#FF60CDFF"/>
+
+        <!-- Yes: gray rest → lighter hover → darker press (footer-like) -->
+        <SolidColorBrush x:Key="YesRestBrush" Color="#FF323232"/>
+        <SolidColorBrush x:Key="YesHoverBrush" Color="#FF404040"/>
+        <SolidColorBrush x:Key="YesPressedBrush" Color="#FF1C1C1C"/>
+        <SolidColorBrush x:Key="YesBorderBrush" Color="#FF474747"/>
+        <SolidColorBrush x:Key="YesForegroundBrush" Color="#FFFFFFFF"/>
+
+        <!-- No: system accent rest → light accent hover → dark accent press -->
+        <SolidColorBrush x:Key="NoRestBrush" Color="#FF0078D4"/>
+        <SolidColorBrush x:Key="NoHoverBrush" Color="#FF60CDFF"/>
+        <SolidColorBrush x:Key="NoPressedBrush" Color="#FF005A9E"/>
+        <SolidColorBrush x:Key="NoForegroundBrush" Color="#FF1A1A1A"/>
+        <SolidColorBrush x:Key="NoHoverForegroundBrush" Color="#FF1A1A1A"/>
+
+        <!-- Title-bar Close: light red hover → darker red pressed -->
+        <SolidColorBrush x:Key="CloseHoverBrush" Color="#FFC42B1C"/>
+        <SolidColorBrush x:Key="ClosePressedBrush" Color="#FF79140D"/>
+
+        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+            <Setter Property="ToolTip" Value="Close"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="400"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="0,8,0,0">
+                            <TextBlock x:Name="Glyph"
+                                       Text="&#xE8BB;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="8"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource CloseHoverBrush}"/>
+                                <Setter TargetName="Glyph" Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ClosePressedBrush}"/>
+                                <Setter TargetName="Glyph" Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="LinkText"
+                                   Text="{TemplateBinding Content}"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource LinkBrush}"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Real UAC "Show more details": same size as publisher/origin meta (12), link blue. -->
+        <Style x:Key="DetailsLinkButtonStyle" TargetType="Button" BasedOn="{StaticResource LinkButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                CornerRadius="4"
+                                Padding="4,1">
+                            <TextBlock x:Name="LinkText"
+                                       Text="{TemplateBinding Content}"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource LinkBrush}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                            <!-- Tab focus: theme focus ring (white dark / black light). -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush"
+                                        Value="{DynamicResource KeyboardFocusBorderBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MoreChoicesButtonStyle" TargetType="Button" BasedOn="{StaticResource LinkButtonStyle}">
+            <Setter Property="Foreground" Value="{DynamicResource AccentLightBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <!-- Real UAC: no underline; hover shifts accent → theme gray. -->
+                        <Border x:Name="Root"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                CornerRadius="4"
+                                Padding="4,1">
+                            <TextBlock x:Name="LinkText"
+                                       Text="{TemplateBinding Content}"
+                                       FontFamily="Segoe UI"
+                                       FontSize="15"
+                                       Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LinkText" Property="Foreground"
+                                        Value="{DynamicResource MoreChoicesLinkHoverBrush}"/>
+                            </Trigger>
+                            <!-- Tab focus: theme focus ring (white dark / black light). -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush"
+                                        Value="{DynamicResource KeyboardFocusBorderBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Seamless tiles; selection fills from code; reveal light tracks the pointer. -->
+        <Style x:Key="MoreChoicesTileStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,18"/>
+            <Setter Property="MinHeight" Value="64"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <!-- List is one Tab stop; only the focused tile is enabled via code-behind. -->
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <Grid ClipToBounds="True" Background="Transparent">
+                                <!-- Selection / hover wash from code-behind. -->
+                                <Border x:Name="BaseFill"
+                                        Background="{TemplateBinding Background}"
+                                        BorderThickness="0"/>
+                                <!-- Full-tile soft white wash; slightly brighter at pointer (no wave rings). -->
+                                <Border x:Name="RevealAmbient"
+                                        IsHitTestVisible="False"
+                                        Opacity="0"
+                                        Background="#1EFFFFFF"/>
+                                <Border x:Name="RevealLight"
+                                        IsHitTestVisible="False"
+                                        Opacity="0"
+                                        ClipToBounds="True">
+                                    <Border.Background>
+                                        <RadialGradientBrush x:Name="RevealBrush"
+                                                             MappingMode="Absolute"
+                                                             RadiusX="400"
+                                                             RadiusY="400"
+                                                             Center="0,0"
+                                                             GradientOrigin="0,0">
+                                            <GradientStop Color="#28FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#10FFFFFF" Offset="1"/>
+                                        </RadialGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <Border Padding="{TemplateBinding Padding}"
+                                        MinHeight="{TemplateBinding MinHeight}"
+                                        Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <!-- Inset focus ring so it doesn't add a gap between seamless tiles. -->
+                            <Border x:Name="FocusRing"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="2"
+                                    CornerRadius="0"
+                                    IsHitTestVisible="False"
+                                    SnapsToDevicePixels="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FocusRing" Property="BorderBrush"
+                                        Value="{DynamicResource KeyboardFocusBorderBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Invisible page buttons for modern overlay ScrollBar track. -->
+        <Style x:Key="OverlayScrollBarPageButtonStyle" TargetType="RepeatButton">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="OverlayScrollBarThumbStyle" TargetType="Thumb">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <!-- Rest: hairline; hover: classic rectangular thumb (no radius / border). -->
+                        <Border x:Name="ThumbVisual"
+                                Width="2"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,2,0"
+                                Background="{DynamicResource OverlayScrollThumbBrush}"
+                                BorderThickness="0"
+                                CornerRadius="0"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}"
+                                         Value="True">
+                                <Setter TargetName="ThumbVisual" Property="Width" Value="Auto"/>
+                                <Setter TargetName="ThumbVisual" Property="Margin" Value="0"/>
+                                <Setter TargetName="ThumbVisual" Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter TargetName="ThumbVisual" Property="CornerRadius" Value="0"/>
+                                <Setter TargetName="ThumbVisual" Property="Background"
+                                        Value="{DynamicResource OverlayScrollThumbHoverBrush}"/>
+                            </DataTrigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbVisual" Property="Width" Value="Auto"/>
+                                <Setter TargetName="ThumbVisual" Property="Margin" Value="0"/>
+                                <Setter TargetName="ThumbVisual" Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter TargetName="ThumbVisual" Property="CornerRadius" Value="0"/>
+                                <Setter TargetName="ThumbVisual" Property="Background"
+                                        Value="{DynamicResource OverlayScrollThumbHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Win11 overlay: thin at rest; classic flat rectangular bar when hovered. -->
+        <Style x:Key="OverlayVerticalScrollBarStyle" TargetType="ScrollBar">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Width" Value="4"/>
+            <Setter Property="MinWidth" Value="4"/>
+            <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid x:Name="Root" Background="Transparent">
+                            <!-- Flat track fill only while expanded (classic chrome, no border). -->
+                            <Border x:Name="TrackChrome"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="0"
+                                    SnapsToDevicePixels="True"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True" Focusable="False">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource OverlayScrollBarPageButtonStyle}"
+                                                  Command="ScrollBar.PageUpCommand"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource OverlayScrollBarThumbStyle}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource OverlayScrollBarPageButtonStyle}"
+                                                  Command="ScrollBar.PageDownCommand"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Width" Value="17"/>
+                                <Setter Property="MinWidth" Value="17"/>
+                                <Setter TargetName="TrackChrome" Property="Background"
+                                        Value="{DynamicResource OverlayScrollTrackHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Overlay ScrollViewer: content full-bleed; thin bar floats on the right edge. -->
+        <Style x:Key="OverlayScrollViewerStyle" TargetType="ScrollViewer">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid Background="{TemplateBinding Background}">
+                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                    Margin="{TemplateBinding Padding}"
+                                                    Content="{TemplateBinding Content}"
+                                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                    CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                       Style="{StaticResource OverlayVerticalScrollBarStyle}"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Stretch"
+                                       Margin="0"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Value="{TemplateBinding VerticalOffset}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                            <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                       Orientation="Horizontal"
+                                       Visibility="Collapsed"
+                                       Height="0"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="YesButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Foreground" Value="{DynamicResource YesForegroundBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{DynamicResource YesRestBrush}"
+                                BorderBrush="{DynamicResource YesBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource YesHoverBrush}"/>
+                            </Trigger>
+                            <!-- Tab focus: keep gray fill, theme focus ring (white dark / black light). -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource YesRestBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush"
+                                        Value="{DynamicResource KeyboardFocusBorderBrush}"/>
+                                <Setter TargetName="Root" Property="BorderThickness" Value="2"/>
+                                <Setter Property="Foreground" Value="{DynamicResource YesForegroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource YesPressedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource YesPressedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="{DynamicResource YesForegroundBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NoButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoForegroundBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{DynamicResource NoRestBrush}"
+                                BorderBrush="{DynamicResource NoRestBrush}"
+                                BorderThickness="0"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource NoHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource NoHoverForegroundBrush}"/>
+                            </Trigger>
+                            <!-- Tab focus: keep cyan fill, theme focus ring (white dark / black light). -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource NoRestBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush"
+                                        Value="{DynamicResource KeyboardFocusBorderBrush}"/>
+                                <Setter TargetName="Root" Property="BorderThickness" Value="2"/>
+                                <Setter Property="Foreground" Value="{DynamicResource NoForegroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource NoPressedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource NoPressedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderThickness" Value="0"/>
+                                <Setter Property="Foreground" Value="{DynamicResource NoForegroundBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Press-and-hold field actions: accent fill for full textbox height while pressed. -->
+        <Style x:Key="FieldActionButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="Transparent"
+                                CornerRadius="0,3,3,0"
+                                Padding="0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch">
+                            <TextBlock x:Name="Glyph"
+                                       Text="{TemplateBinding Content}"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource FieldActionGlyphBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Glyph" Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="Active">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Glyph" Property="Foreground" Value="White"/>
+                            </DataTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsPressed" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Glyph" Property="Foreground" Value="{DynamicResource FieldActionGlyphHoverBrush}"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RevealPasswordButtonStyle" TargetType="Button" BasedOn="{StaticResource FieldActionButtonStyle}">
+            <Setter Property="Content" Value="&#xF78D;"/>
+            <Setter Property="ToolTip" Value="Show password"/>
+        </Style>
+
+        <Style x:Key="ClearUserNameButtonStyle" TargetType="Button" BasedOn="{StaticResource FieldActionButtonStyle}">
+            <Setter Property="Content" Value="&#xE711;"/>
+            <Setter Property="ToolTip" Value="Clear user name"/>
+        </Style>
+
+        <Style x:Key="UacTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <!-- Segoe UI reads denser than Variable Text at the same size (closer to real UAC). -->
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <!-- System caret hidden; custom caret handles the 3-blink-then-solid behavior. -->
+            <Setter Property="CaretBrush" Value="Transparent"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="SelectionTextBrush" Value="White"/>
+            <Setter Property="SelectionOpacity" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <Grid ClipToBounds="True">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              Grid.Column="0"
+                                              Margin="10,6,4,6"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Disabled"
+                                              Focusable="False"/>
+                                <TextBlock x:Name="Placeholder"
+                                           Grid.Column="0"
+                                           Text="User name"
+                                           Margin="10,0,4,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="{TemplateBinding FontFamily}"
+                                           FontSize="{TemplateBinding FontSize}"
+                                           Foreground="{DynamicResource PlaceholderBrush}"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Watermark shows whenever the field is empty, focused or not; only typing a value replaces it (real UAC). -->
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource InputFocusBorderBrush}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="{DynamicResource InputFocusForegroundBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="UacPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="CaretBrush" Value="Transparent"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="SelectionTextBrush" Value="White"/>
+            <Setter Property="SelectionOpacity" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <Grid ClipToBounds="True">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              Grid.Column="0"
+                                              Margin="10,6,4,6"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Disabled"
+                                              Focusable="False"/>
+                                <TextBlock x:Name="Placeholder"
+                                           Grid.Column="0"
+                                           Text="Password"
+                                           Margin="10,0,4,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="{TemplateBinding FontFamily}"
+                                           FontSize="{TemplateBinding FontSize}"
+                                           Foreground="{DynamicResource PlaceholderBrush}"
+                                           IsHitTestVisible="False"
+                                           Visibility="Visible"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource InputFocusBorderBrush}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="{DynamicResource InputFocusForegroundBrush}"/>
+                                <Setter TargetName="Placeholder" Property="Foreground" Value="{DynamicResource PlaceholderFocusBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="UacRevealTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource UacTextBoxStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <Grid ClipToBounds="True">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              Grid.Column="0"
+                                              Margin="10,6,4,6"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Disabled"
+                                              Focusable="False"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource InputFocusBorderBrush}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="{DynamicResource InputFocusForegroundBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Dialog window: card fills the window; native DragMove on the title strip.
+         Starts Hidden so the open sequence is dim-first, then card (no credential flash). -->
+    <Border x:Name="UacCard"
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            ClipToBounds="True"
+            SnapsToDevicePixels="True"
+            Background="{DynamicResource BodyBrush}"
+            Visibility="Hidden"
+            PreviewMouseLeftButtonDown="UacCard_PreviewMouseLeftButtonDown">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="48" ShadowDepth="12" Opacity="0.45" Color="#000000"/>
+        </Border.Effect>
+
+        <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition x:Name="BodyRow" Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Fixed title strip only; question + body scroll together beneath it (real UAC). -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource HeaderBrush}"
+                        CornerRadius="8,8,0,0">
+                    <Grid x:Name="TitleBar"
+                          MinHeight="32"
+                          Background="Transparent"
+                          MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                          MouseRightButtonUp="TitleBar_MouseRightButtonUp">
+                        <TextBlock Text="User Account Control"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="16,10,32,0"
+                                   VerticalAlignment="Top"/>
+                        <Button x:Name="CloseButton"
+                                Style="{StaticResource TitleBarButtonStyle}"
+                                Click="CloseButton_Click"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="1" Background="{DynamicResource BodyBrush}">
+                    <ScrollViewer x:Name="BodyScrollViewer"
+                                  Style="{StaticResource OverlayScrollViewerStyle}"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  CanContentScroll="False"
+                                  Focusable="False"
+                                  Padding="0"
+                                  Margin="0">
+                    <StackPanel>
+                        <!-- Question rides in the scrollable region under the title bar. -->
+                        <Border Background="{DynamicResource HeaderBrush}">
+                            <TextBlock Text="Do you want to allow this app to make changes to your device?"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI Semibold, Segoe UI"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="24,8,24,16"/>
+                        </Border>
+
+                        <StackPanel Margin="24,16,24,8">
+                        <!-- Icon + app name only on one row; meta lines sit below on their own rows (real UAC). -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Image x:Name="AppIconImage"
+                                   Grid.Column="0"
+                                   Width="40" Height="40"
+                                   Margin="0,0,16,0"
+                                   VerticalAlignment="Center"
+                                   Stretch="Uniform"
+                                   SnapsToDevicePixels="True"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Source="pack://application:,,,/vsix-plain-128.png"/>
+
+                            <TextBlock x:Name="AppNameText"
+                                       Grid.Column="1"
+                                       Text="VSIX Installer"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="18"
+                                       FontWeight="Normal"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
+                        </Grid>
+
+                        <TextBlock x:Name="VerifiedPublisherText"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,0"
+                                   Text="Verified publisher: Microsoft Corporation"/>
+                        <TextBlock x:Name="FileOriginText"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,0"
+                                   Text="File origin: Hard drive on this computer"/>
+                        <TextBlock x:Name="ProgramLocationText"
+                                   Visibility="Collapsed"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,0"/>
+                        <Button x:Name="DetailsToggleButton"
+                                Content="Show more details"
+                                Style="{StaticResource DetailsLinkButtonStyle}"
+                                Margin="0,16,0,0"
+                                HorizontalAlignment="Left"
+                                Click="DetailsToggleButton_Click"/>
+
+                        <TextBlock x:Name="CredentialHintText"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,20,0,14"/>
+
+                        <!-- Credential fields: ~78% dialog width with side gutters like real UAC -->
+                        <StackPanel x:Name="CredentialFieldsPanel"
+                                    HorizontalAlignment="Left"
+                                    MaxWidth="320">
+                            <!-- Known/cached account: display name alone above Password (no avatar — that is a later use case). -->
+                            <TextBlock x:Name="DetectedAccountText"
+                                       Margin="0,0,0,12"
+                                       Visibility="Collapsed"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI Semibold, Segoe UI"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"/>
+
+                            <!-- Starter / unknown account: both User name + Password. -->
+                            <StackPanel x:Name="ManualUserNamePanel">
+                            <TextBlock Text="User name"
+                                       FontFamily="Segoe UI"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,2"
+                                       MouseLeftButtonDown="UserNameLabel_MouseLeftButtonDown"/>
+                            <Grid Margin="0,0,0,12">
+                                <TextBox x:Name="UserNameBox"
+                                         Style="{StaticResource UacTextBoxStyle}"
+                                         GotKeyboardFocus="CredentialField_GotKeyboardFocus"
+                                         LostKeyboardFocus="CredentialField_LostKeyboardFocus"
+                                         PreviewKeyDown="CredentialField_PreviewKeyDown"
+                                         TextChanged="UserNameBox_TextChanged"
+                                         SelectionChanged="CredentialField_SelectionChanged"/>
+                                <Button x:Name="ClearUserNameButton"
+                                        Panel.ZIndex="2"
+                                        Style="{StaticResource ClearUserNameButtonStyle}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Stretch"
+                                        Visibility="Collapsed"
+                                        PreviewMouseLeftButtonDown="ClearUserNameButton_PreviewMouseLeftButtonDown"
+                                        PreviewMouseLeftButtonUp="ClearUserNameButton_PreviewMouseLeftButtonUp"
+                                        PreviewMouseMove="ClearUserNameButton_PreviewMouseMove"
+                                        MouseLeave="ClearUserNameButton_MouseLeave"
+                                        LostMouseCapture="ClearUserNameButton_LostMouseCapture"/>
+                                <Canvas x:Name="UserNameCaretLayer" Panel.ZIndex="1" IsHitTestVisible="False">
+                                    <Rectangle x:Name="UserNameCaret"
+                                               Width="1.5"
+                                               Height="16"
+                                               Fill="{DynamicResource InputFocusForegroundBrush}"
+                                               Visibility="Collapsed"/>
+                                </Canvas>
+                            </Grid>
+                            </StackPanel>
+
+                            <TextBlock Text="Password"
+                                       FontFamily="Segoe UI"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,2"
+                                       MouseLeftButtonDown="PasswordLabel_MouseLeftButtonDown"/>
+                            <Grid Margin="0,0,0,8">
+                                <PasswordBox x:Name="PasswordBox"
+                                             Style="{StaticResource UacPasswordBoxStyle}"
+                                             PasswordChanged="PasswordBox_PasswordChanged"
+                                             PreviewGotKeyboardFocus="PasswordBox_PreviewGotKeyboardFocus"
+                                             GotKeyboardFocus="CredentialField_GotKeyboardFocus"
+                                             LostKeyboardFocus="CredentialField_LostKeyboardFocus"
+                                             PreviewKeyDown="CredentialField_PreviewKeyDown"
+                                             PreviewMouseLeftButtonDown="PasswordBox_PreviewMouseLeftButtonDown"
+                                             PreviewMouseLeftButtonUp="PasswordBox_PreviewMouseLeftButtonUp"/>
+                                <TextBox x:Name="PasswordRevealBox"
+                                         Style="{StaticResource UacRevealTextBoxStyle}"
+                                         Visibility="Collapsed"
+                                         Focusable="False"
+                                         IsHitTestVisible="False"
+                                         TextChanged="PasswordRevealBox_TextChanged"/>
+                                <Button x:Name="RevealPasswordButton"
+                                        Panel.ZIndex="2"
+                                        Style="{StaticResource RevealPasswordButtonStyle}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Stretch"
+                                        Visibility="Collapsed"
+                                        Margin="0"
+                                        PreviewMouseLeftButtonDown="RevealPasswordButton_PreviewMouseLeftButtonDown"
+                                        PreviewMouseLeftButtonUp="RevealPasswordButton_PreviewMouseLeftButtonUp"
+                                        PreviewMouseMove="RevealPasswordButton_PreviewMouseMove"
+                                        MouseLeave="RevealPasswordButton_MouseLeave"
+                                        LostMouseCapture="RevealPasswordButton_LostMouseCapture"/>
+                                <Canvas x:Name="PasswordCaretLayer" Panel.ZIndex="1" IsHitTestVisible="False">
+                                    <Rectangle x:Name="PasswordCaret"
+                                               Width="1.5"
+                                               Height="16"
+                                               Fill="{DynamicResource InputFocusForegroundBrush}"
+                                               Visibility="Collapsed"/>
+                                </Canvas>
+                            </Grid>
+
+                            <!-- Manual mode: Domain: STP. Known-account mode: optional DOMAIN\user (hidden when cached-offline). -->
+                            <TextBlock x:Name="DomainText"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,8"/>
+                            <TextBlock x:Name="DetectedSamAccountText"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Margin="0,0,0,8"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
+
+                        <!-- Full dialog content width (not the inset text-box column). -->
+                        <TextBlock x:Name="CredentialErrorText"
+                                   Text="Please enter a user name and password."
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   Foreground="{DynamicResource CredentialErrorBrush}"
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Stretch"
+                                   Visibility="Collapsed"
+                                   Margin="0,8,0,16"/>
+                        <!-- Shown only after the first failed validation; last before the footer. -->
+                        <Button x:Name="MoreChoicesButton"
+                                Content="More choices"
+                                Style="{StaticResource MoreChoicesButtonStyle}"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
+                                Visibility="Collapsed"
+                                Click="MoreChoicesButton_Click"/>
+
+                        <!-- Expanded by More choices: keep current SAM or switch to another account. -->
+                        <StackPanel x:Name="MoreChoicesList"
+                                    Visibility="Collapsed"
+                                    Margin="0,4,0,8"
+                                    KeyboardNavigation.TabNavigation="Once"
+                                    KeyboardNavigation.DirectionalNavigation="None">
+                            <Button x:Name="CurrentAccountChoiceButton"
+                                    Style="{StaticResource MoreChoicesTileStyle}"
+                                    Click="CurrentAccountChoiceButton_Click"
+                                    MouseEnter="MoreChoicesTile_MouseEnter"
+                                    MouseLeave="MoreChoicesTile_MouseLeave"
+                                    MouseMove="MoreChoicesTile_MouseMove">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE192;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,12,0"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="CurrentAccountChoiceText"
+                                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <!-- Current user only: DOMAIN\user under the full name (real UAC). -->
+                                        <TextBlock x:Name="CurrentAccountChoiceSamText"
+                                                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Visibility="Collapsed"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="DifferentAccountChoiceButton"
+                                    Style="{StaticResource MoreChoicesTileStyle}"
+                                    Click="DifferentAccountChoiceButton_Click"
+                                    MouseEnter="MoreChoicesTile_MouseEnter"
+                                    MouseLeave="MoreChoicesTile_MouseLeave"
+                                    MouseMove="MoreChoicesTile_MouseMove">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="18" Height="18"
+                                            CornerRadius="9"
+                                            BorderBrush="{DynamicResource PrimaryTextBrush}"
+                                            BorderThickness="1.5"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,12,0">
+                                        <TextBlock Text="&#xE77B;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="Use a different account"
+                                               FontFamily="Segoe UI Variable Text, Segoe UI"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                    </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <Border Grid.Row="2" Background="{DynamicResource FooterBrush}" CornerRadius="0,0,8,8"
+                        MinHeight="88">
+                    <Grid Margin="24,28,24,28" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="YesButton"
+                                Grid.Column="0"
+                                Content="Yes"
+                                Style="{StaticResource YesButtonStyle}"
+                                Click="YesButton_Click"/>
+                        <Button x:Name="NoButton"
+                                Grid.Column="2"
+                                Content="No"
+                                Style="{StaticResource NoButtonStyle}"
+                                IsCancel="True"
+                                Click="NoButton_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+    </Border>
+</Window>

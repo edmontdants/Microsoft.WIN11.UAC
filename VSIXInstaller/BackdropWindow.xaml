@@ -1,0 +1,24 @@
+<Window x:Class="VSIXInstaller.BackdropWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title=""
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ShowActivated="False"
+        WindowStartupLocation="Manual"
+        Focusable="False">
+    <!-- Hit-testable absorber; WS_EX_NOACTIVATE keeps the credential window focused. -->
+    <Grid x:Name="Root" Background="Black" ClipToBounds="True">
+        <Image x:Name="DesktopWallpaper"
+               Stretch="Uniform"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               SnapsToDevicePixels="True"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+        <Border x:Name="DimOverlay" Background="#CC000000"/>
+    </Grid>
+</Window>

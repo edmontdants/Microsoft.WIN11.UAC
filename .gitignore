@@ -426,3 +426,9 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Claude Code local settings
+.claude/
+
+# Local reference screenshots (contain personal name/domain) - not published
+real uac screen ui behavior/
